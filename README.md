@@ -44,7 +44,7 @@ A type-safe command-line argument parser for Zig. Taking inspiration from **Rust
 - [x] Short flag names (`-v`)
 - [x] Long flag names (`--verbose`)
 - [x] Slice support (multiple values per flag)
-- [x] Three parsing patterns: repeated, space-separated, comma-separated
+- [x] Two parsing patterns: repeated, comma-separated
 
 ---
 
@@ -160,14 +160,11 @@ const Args = struct {
 };
 ```
 
-#### Three Syntax Patterns:
+#### Two Syntax Patterns:
 
 ```bash
 # Repeated flags (default)
 ./program --files=a.txt --files=b.txt --files=c.txt
-
-# Space-separated values
-./program --files a.txt b.txt c.txt
 
 # Comma-separated values  
 ./program --files=a.txt,b.txt,c.txt
