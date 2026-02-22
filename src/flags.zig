@@ -317,16 +317,14 @@ fn is_help_arg(arg: []const u8) bool {
     return std.mem.eql(u8, arg, "-h") or std.mem.eql(u8, arg, "--help");
 }
 
-/// Print help text and exit. Requires `pub const help` on the type.
-/// Help is the user's responsibility — the parser handles parsing, not presentation.
-fn print_help(comptime T: type) noreturn {
+/// Print help text.
+/// Requires `pub const help` on the type.
+fn print_help(comptime T: type) void {
     if (@hasDecl(T, "help")) {
         std.debug.print("{s}", .{T.help});
     } else {
         std.debug.print("No help available. Declare `pub const help` on your type.\n", .{});
     }
-    // BUG: libraries don't exit
-    std.process.exit(0);
 }
 
 // =============================================================================
@@ -341,6 +339,13 @@ test "auto help generation" {
     };
 
     try std.testing.expect(@hasDecl(Args, "help") == false);
+
+    const Args2 = struct {
+        verbose: bool = false,
+        pub const help = "Usage: myapp";
+    };
+    print_help(Args2); // Verify it doesn't panic
+    try std.testing.expect(@hasDecl(Args2, "help") == true);
 }
 
 test "invalid flag" {
