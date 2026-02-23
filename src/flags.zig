@@ -248,7 +248,8 @@ fn parse_subcommand(
             }
             break :blk try parse_commands(allocator, args, field.type);
         },
-        else => @compileError("subcommand types must be struct or union(enum)"),
+        .void => if (args.len > 0 and !is_help_arg(args[0])) error.UnexpectedArgument else {},
+        else => @compileError("subcommand types must be struct, union(enum), or void"),
     };
 }
 
@@ -498,6 +499,32 @@ test "parse subcommand with defaults" {
     const result = try parse(allocator, &.{ "prog", "start" }, CLI);
     try std.testing.expect(std.mem.eql(u8, result.start.host, "localhost"));
     try std.testing.expect(result.start.port == 8080);
+}
+
+test "void subcommand variant" {
+    const allocator = std.testing.allocator;
+    const CLI = union(enum) {
+        start: struct {
+            port: u16 = 8080,
+        },
+        stop: void,
+    };
+
+    const result = try parse(allocator, &.{ "prog", "stop" }, CLI);
+    try std.testing.expect(result == .stop);
+
+    const result2 = try parse(allocator, &.{ "prog", "start" }, CLI);
+    try std.testing.expect(result2.start.port == 8080);
+}
+
+test "void subcommand variant with extra args" {
+    const allocator = std.testing.allocator;
+    const CLI = union(enum) {
+        start: struct { port: u16 = 8080 },
+        stop: void,
+    };
+
+    try std.testing.expectError(error.UnexpectedArgument, parse(allocator, &.{ "prog", "stop", "--force" }, CLI));
 }
 
 test "missing subcommand" {
