@@ -162,6 +162,16 @@ fn parse_struct(allocator: std.mem.Allocator, args: []const []const u8, comptime
         positional_only = true;
     }
 
+    errdefer {
+        inline for (named_fields, 0..) |field, fi| {
+            if (comptime is_slice_type(field.type)) {
+                if (seen[fi]) {
+                    allocator.free(@field(result, field.name));
+                }
+            }
+        }
+    }
+
     // Build slices and apply defaults.
     inline for (named_fields, 0..) |field, field_index| {
         if (comptime is_union_subcommand(field)) {
@@ -170,6 +180,7 @@ fn parse_struct(allocator: std.mem.Allocator, args: []const []const u8, comptime
             }
         } else if (comptime is_slice_type(field.type)) {
             if (seen[field_index]) {
+                seen[field_index] = false; // guards outer errdefer: only free if assigned
                 const items = slice_lists[field_index].items;
                 const child = comptime @typeInfo(field.type).pointer.child;
                 const typed = try allocator.alloc(child, items.len);
