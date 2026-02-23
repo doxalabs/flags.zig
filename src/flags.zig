@@ -264,7 +264,7 @@ fn parse_scalar(comptime T: type, value: ?[]const u8) !T {
     if (T == []u8) @compileError("use []const u8 for flag values");
 
     switch (@typeInfo(T)) {
-        .int => return std.fmt.parseInt(T, v, 10) catch return error.InvalidValue,
+        .int => return std.fmt.parseInt(T, v, 0) catch return error.InvalidValue,
         .float => return std.fmt.parseFloat(T, v) catch return error.InvalidValue,
         .@"enum" => return std.meta.stringToEnum(T, v) orelse error.InvalidValue,
         else => @compileError("Unsupported flag type: " ++ @typeName(T)),
