@@ -215,11 +215,12 @@ The parser extracts typed values. What you do with them is your business.
 
 ## Not planned
 
-- **No short flags** — only long flags (`--flag=value`), except `-h` for help
+- **No short flags** — only long flags (`--flag=value`), except `-h` for help. For brevity, use `--v` instead of `-v`
 - **No custom types** — only built-in types and enums
 - **No nested slices** — slices of slices not supported (`[][]T`)
 - **Equals syntax only** — use `--name=value` not `--name value`
 - **Strict boolean values** — only `true` and `false` are accepted (no `1`, `0`, `yes`, `no`, etc.)
+- **No subcommands + positional args** — use either subcommands or positional arguments, not both in the same struct
 
 ## Credits
 This library draws significant inspiration from two exceptional projects:
