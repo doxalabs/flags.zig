@@ -91,6 +91,7 @@ fn parse_struct(allocator: std.mem.Allocator, args: []const []const u8, comptime
 
     var result: T = undefined;
     var seen = std.mem.zeroes([named_fields.len]bool);
+    var slice_assigned = std.mem.zeroes([named_fields.len]bool);
     var positional_index: usize = 0;
     var positional_only = false;
 
@@ -193,7 +194,7 @@ fn parse_struct(allocator: std.mem.Allocator, args: []const []const u8, comptime
     errdefer {
         inline for (named_fields, 0..) |field, fi| {
             if (comptime is_slice_type(field.type)) {
-                if (seen[fi]) {
+                if (slice_assigned[fi]) {
                     allocator.free(@field(result, field.name));
                 }
             }
@@ -208,7 +209,6 @@ fn parse_struct(allocator: std.mem.Allocator, args: []const []const u8, comptime
             }
         } else if (comptime is_slice_type(field.type)) {
             if (seen[field_index]) {
-                seen[field_index] = false; // guards outer errdefer: only free if assigned
                 const items = slice_lists[field_index].items;
                 const child = comptime @typeInfo(field.type).pointer.child;
                 const typed = try allocator.alloc(child, items.len);
@@ -217,6 +217,7 @@ fn parse_struct(allocator: std.mem.Allocator, args: []const []const u8, comptime
                     typed[j] = try parse_scalar(child, raw);
                 }
                 @field(result, field.name) = typed;
+                slice_assigned[field_index] = true;
             } else {
                 const child = comptime @typeInfo(field.type).pointer.child;
                 if (field.defaultValue()) |default| {
@@ -1155,4 +1156,18 @@ test "deinit with optional subcommand null" {
 
     try std.testing.expect(result.verbose == true);
     try std.testing.expect(result.command == null);
+}
+
+test "multi-slice error path does not leak" {
+    const allocator = std.testing.allocator;
+    const Args = struct {
+        files: []const []const u8 = &[_][]const u8{},
+        ports: []const u16 = &[_]u16{},
+    };
+
+    // Second slice has an invalid value — first slice must not leak
+    try std.testing.expectError(
+        error.InvalidValue,
+        parse(allocator, &.{ "prog", "--files=a.txt,b.txt", "--ports=80,bad" }, Args),
+    );
 }
