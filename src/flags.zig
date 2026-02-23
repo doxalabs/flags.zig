@@ -384,6 +384,7 @@ test "auto help generation" {
         pub const help = "Usage: myapp";
     };
     try std.testing.expectEqual(true, @hasDecl(Args2, "help"));
+    try std.testing.expectEqualStrings("Usage: myapp", Args2.help);
 }
 
 test "bare argument rejected without positionals" {
@@ -449,46 +450,38 @@ test "parse enum with default" {
     try std.testing.expectEqual(Format.json, flags.format);
 }
 
-test "parse optional string" {
+test "parse optional types" {
     const allocator = std.testing.allocator;
-    const Args = struct {
+
+    const ArgsString = struct {
         config: ?[]const u8 = null,
     };
-
-    const flags1 = try parse(allocator, &.{"prog"}, Args);
+    const flags1 = try parse(allocator, &.{"prog"}, ArgsString);
     try std.testing.expectEqual(null, flags1.config);
 
-    const flags2 = try parse(allocator, &.{ "prog", "--config=/path/to/config" }, Args);
+    const flags2 = try parse(allocator, &.{ "prog", "--config=/path/to/config" }, ArgsString);
     try std.testing.expect(flags2.config != null);
     try std.testing.expectEqualStrings("/path/to/config", flags2.config.?);
-}
 
-test "parse optional int" {
-    const allocator = std.testing.allocator;
-    const Args = struct {
+    const ArgsInt = struct {
         count: ?u32 = null,
     };
+    const flags3 = try parse(allocator, &.{"prog"}, ArgsInt);
+    try std.testing.expectEqual(null, flags3.count);
 
-    const flags1 = try parse(allocator, &.{"prog"}, Args);
-    try std.testing.expectEqual(null, flags1.count);
+    const flags4 = try parse(allocator, &.{ "prog", "--count=42" }, ArgsInt);
+    try std.testing.expect(flags4.count != null);
+    try std.testing.expectEqual(42, flags4.count.?);
 
-    const flags2 = try parse(allocator, &.{ "prog", "--count=42" }, Args);
-    try std.testing.expect(flags2.count != null);
-    try std.testing.expectEqual(42, flags2.count.?);
-}
-
-test "parse optional bool" {
-    const allocator = std.testing.allocator;
-    const Args = struct {
+    const ArgsBool = struct {
         verbose: ?bool = null,
     };
+    const flags5 = try parse(allocator, &.{"prog"}, ArgsBool);
+    try std.testing.expectEqual(null, flags5.verbose);
 
-    const flags1 = try parse(allocator, &.{"prog"}, Args);
-    try std.testing.expectEqual(null, flags1.verbose);
-
-    const flags2 = try parse(allocator, &.{ "prog", "--verbose" }, Args);
-    try std.testing.expect(flags2.verbose != null);
-    try std.testing.expectEqual(true, flags2.verbose.?);
+    const flags6 = try parse(allocator, &.{ "prog", "--verbose" }, ArgsBool);
+    try std.testing.expect(flags6.verbose != null);
+    try std.testing.expectEqual(true, flags6.verbose.?);
 }
 
 test "parse boolean formats" {
