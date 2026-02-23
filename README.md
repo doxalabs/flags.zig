@@ -213,6 +213,7 @@ The parser extracts typed values. What you do with them is your business.
 - **No custom types** — only built-in types and enums
 - **No nested slices** — slices of slices not supported (`[][]T`)
 - **Equals syntax only** — use `--name=value` not `--name value`
+- **Strict boolean values** — only `true` and `false` are accepted (no `1`, `0`, `yes`, `no`, etc.)
 
 ## Credits
 This library draws significant inspiration from two exceptional projects:
