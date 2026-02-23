@@ -178,6 +178,12 @@ const Args = struct {
 // Usage: program --verbose input.txt output.txt
 ```
 
+**Note:** All flag arguments (`--name=value`) must appear before any positional arguments. Once the first positional value is parsed, subsequent `--flag` arguments are treated as positional values. Use the explicit `--` separator to disambiguate:
+
+```bash
+program --verbose -- input.txt --flag-is-positional
+```
+
 ## Best Practices
 
 ### DO
