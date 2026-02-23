@@ -562,16 +562,19 @@ test "missing subcommand" {
 
 test "unknown subcommand" {
     const allocator = std.testing.allocator;
-    const CLI = union(enum) {
-        start: struct {
-            host: []const u8 = "localhost",
-        },
-        stop: struct {
-            force: bool = false,
+    const CLI = struct {
+        verbose: bool = false,
+        command: union(enum) {
+            start: struct {
+                host: []const u8 = "localhost",
+            },
+            stop: struct {
+                force: bool = false,
+            },
         },
     };
 
-    try std.testing.expectError(error.UnknownSubcommand, parse(allocator, &.{ "prog", "restart" }, CLI));
+    try std.testing.expectError(error.UnknownSubcommand, parse(allocator, &.{ "prog", "--verbose", "restart" }, CLI));
 }
 
 test "duplicate flag" {
@@ -868,18 +871,6 @@ test "optional subcommand not given" {
     try std.testing.expectEqual(null, result.command);
 }
 
-test "unknown subcommand with global flags" {
-    const allocator = std.testing.allocator;
-    const CLI = struct {
-        verbose: bool = false,
-        command: union(enum) {
-            serve: struct { port: u16 = 8080 },
-        },
-    };
-
-    try std.testing.expectError(error.UnknownSubcommand, parse(allocator, &.{ "prog", "deploy" }, CLI));
-}
-
 test "subcommand with nested union" {
     const allocator = std.testing.allocator;
     const CLI = struct {
@@ -944,37 +935,29 @@ test "positional with explicit separator" {
     try std.testing.expectEqualStrings("main.zig", result.input);
 }
 
-test "positional with negative number after separator" {
+test "positional with negative and dash-prefixed values after separator" {
     const allocator = std.testing.allocator;
-    const Args = struct {
+
+    const ArgsInt = struct {
         @"--": void,
         value: i32,
     };
+    const result_int = try parse(allocator, &.{ "prog", "--", "-5" }, ArgsInt);
+    try std.testing.expectEqual(-5, result_int.value);
 
-    const result = try parse(allocator, &.{ "prog", "--", "-5" }, Args);
-    try std.testing.expectEqual(-5, result.value);
-}
-
-test "positional with negative float after separator" {
-    const allocator = std.testing.allocator;
-    const Args = struct {
+    const ArgsFloat = struct {
         @"--": void,
         value: f64,
     };
+    const result_float = try parse(allocator, &.{ "prog", "--", "-3.14" }, ArgsFloat);
+    try std.testing.expectEqual(-3.14, result_float.value);
 
-    const result = try parse(allocator, &.{ "prog", "--", "-3.14" }, Args);
-    try std.testing.expectEqual(-3.14, result.value);
-}
-
-test "positional with dash-prefixed string after separator" {
-    const allocator = std.testing.allocator;
-    const Args = struct {
+    const ArgsString = struct {
         @"--": void,
         name: []const u8,
     };
-
-    const result = try parse(allocator, &.{ "prog", "--", "-filename" }, Args);
-    try std.testing.expectEqualStrings("-filename", result.name);
+    const result_string = try parse(allocator, &.{ "prog", "--", "-filename" }, ArgsString);
+    try std.testing.expectEqualStrings("-filename", result_string.name);
 }
 
 test "positional missing required" {
