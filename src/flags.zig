@@ -391,7 +391,7 @@ test "auto help generation" {
     try std.testing.expectEqual(true, @hasDecl(Args2, "help"));
 }
 
-test "invalid flag" {
+test "bare argument rejected without positionals" {
     const allocator = std.testing.allocator;
     const Args = struct {
         name: []const u8 = "joe",
