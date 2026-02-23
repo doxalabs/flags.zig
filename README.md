@@ -212,7 +212,14 @@ The parser extracts typed values. What you do with them is your business.
 - **No custom types** — only built-in types and enums
 - **No nested slices** — slices of slices not supported (`[][]T`)
 - **Equals syntax only** — use `--name=value` not `--name value`
-- **No void union variants** — use `struct {}` for no-arg subcommands. see [Issue](https://github.com/atisans/flags.zig/issues/6)
+- **No void union variants** — use `struct {}` for subcommands with no flags:
+  ```zig
+  const CLI = union(enum) {
+      start: struct { port: u16 = 8080 },
+      stop: struct {},  // no flags, use struct{} instead of void
+  };
+  ```
+  See [Issue](https://github.com/atisans/flags.zig/issues/6)
 
 ## Credits
 This library draws significant inspiration from two exceptional projects:
