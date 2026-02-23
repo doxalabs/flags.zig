@@ -637,7 +637,7 @@ test "slice repeated flags" {
     const result = try parse(allocator, &.{ "prog", "--files=a.txt", "--files=b.txt", "--files=c.txt" }, Args);
     defer allocator.free(result.files);
 
-    try std.testing.expectEqual(@as(usize, 3), result.files.len);
+    try std.testing.expectEqual(3, result.files.len);
     try std.testing.expect(std.mem.eql(u8, result.files[0], "a.txt"));
     try std.testing.expect(std.mem.eql(u8, result.files[1], "b.txt"));
     try std.testing.expect(std.mem.eql(u8, result.files[2], "c.txt"));
@@ -652,7 +652,7 @@ test "slice comma separated" {
     const result = try parse(allocator, &.{ "prog", "--files=a.txt,b.txt,c.txt" }, Args);
     defer allocator.free(result.files);
 
-    try std.testing.expectEqual(@as(usize, 3), result.files.len);
+    try std.testing.expectEqual(3, result.files.len);
     try std.testing.expect(std.mem.eql(u8, result.files[0], "a.txt"));
     try std.testing.expect(std.mem.eql(u8, result.files[1], "b.txt"));
     try std.testing.expect(std.mem.eql(u8, result.files[2], "c.txt"));
@@ -667,10 +667,10 @@ test "slice integer values" {
     const result = try parse(allocator, &.{ "prog", "--ports=8080", "--ports=9090", "--ports=3000" }, Args);
     defer allocator.free(result.ports);
 
-    try std.testing.expectEqual(@as(usize, 3), result.ports.len);
-    try std.testing.expectEqual(@as(u16, 8080), result.ports[0]);
-    try std.testing.expectEqual(@as(u16, 9090), result.ports[1]);
-    try std.testing.expectEqual(@as(u16, 3000), result.ports[2]);
+    try std.testing.expectEqual(3, result.ports.len);
+    try std.testing.expectEqual(8080, result.ports[0]);
+    try std.testing.expectEqual(9090, result.ports[1]);
+    try std.testing.expectEqual(3000, result.ports[2]);
 }
 
 test "slice enum values" {
@@ -683,7 +683,7 @@ test "slice enum values" {
     const result = try parse(allocator, &.{ "prog", "--formats=json,yaml,toml" }, Args);
     defer allocator.free(result.formats);
 
-    try std.testing.expectEqual(@as(usize, 3), result.formats.len);
+    try std.testing.expectEqual(3, result.formats.len);
     try std.testing.expectEqual(Format.json, result.formats[0]);
     try std.testing.expectEqual(Format.yaml, result.formats[1]);
     try std.testing.expectEqual(Format.toml, result.formats[2]);
@@ -697,7 +697,7 @@ test "slice with default" {
 
     const result = try parse(allocator, &.{"prog"}, Args);
     // Default is used (no allocation), nothing to free.
-    try std.testing.expectEqual(@as(usize, 0), result.files.len);
+    try std.testing.expectEqual(0, result.files.len);
 }
 
 test "slice mixed with scalar flags" {
@@ -711,11 +711,11 @@ test "slice mixed with scalar flags" {
     const result = try parse(allocator, &.{ "prog", "--files=a.txt", "--verbose", "--files=b.txt", "--port=3000" }, Args);
     defer allocator.free(result.files);
 
-    try std.testing.expectEqual(@as(usize, 2), result.files.len);
+    try std.testing.expectEqual(2, result.files.len);
     try std.testing.expect(std.mem.eql(u8, result.files[0], "a.txt"));
     try std.testing.expect(std.mem.eql(u8, result.files[1], "b.txt"));
     try std.testing.expect(result.verbose == true);
-    try std.testing.expectEqual(@as(u16, 3000), result.port);
+    try std.testing.expectEqual(3000, result.port);
 }
 
 test "slice comma separated integers" {
@@ -727,10 +727,10 @@ test "slice comma separated integers" {
     const result = try parse(allocator, &.{ "prog", "--ports=80,443,8080" }, Args);
     defer allocator.free(result.ports);
 
-    try std.testing.expectEqual(@as(usize, 3), result.ports.len);
-    try std.testing.expectEqual(@as(u16, 80), result.ports[0]);
-    try std.testing.expectEqual(@as(u16, 443), result.ports[1]);
-    try std.testing.expectEqual(@as(u16, 8080), result.ports[2]);
+    try std.testing.expectEqual(3, result.ports.len);
+    try std.testing.expectEqual(80, result.ports[0]);
+    try std.testing.expectEqual(443, result.ports[1]);
+    try std.testing.expectEqual(8080, result.ports[2]);
 }
 
 test "slice invalid element" {
@@ -751,7 +751,7 @@ test "slice single value" {
     const result = try parse(allocator, &.{ "prog", "--tags=only-one" }, Args);
     defer allocator.free(result.tags);
 
-    try std.testing.expectEqual(@as(usize, 1), result.tags.len);
+    try std.testing.expectEqual(1, result.tags.len);
     try std.testing.expect(std.mem.eql(u8, result.tags[0], "only-one"));
 }
 
@@ -766,12 +766,12 @@ test "multiple slice fields" {
     defer allocator.free(result.files);
     defer allocator.free(result.ports);
 
-    try std.testing.expectEqual(@as(usize, 2), result.files.len);
+    try std.testing.expectEqual(2, result.files.len);
     try std.testing.expect(std.mem.eql(u8, result.files[0], "a.txt"));
     try std.testing.expect(std.mem.eql(u8, result.files[1], "b.txt"));
-    try std.testing.expectEqual(@as(usize, 2), result.ports.len);
-    try std.testing.expectEqual(@as(u16, 80), result.ports[0]);
-    try std.testing.expectEqual(@as(u16, 443), result.ports[1]);
+    try std.testing.expectEqual(2, result.ports.len);
+    try std.testing.expectEqual(80, result.ports[0]);
+    try std.testing.expectEqual(443, result.ports[1]);
 }
 
 test "global flags with subcommand" {
