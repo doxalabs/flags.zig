@@ -153,17 +153,13 @@ fn parse_struct(allocator: std.mem.Allocator, args: []const []const u8, comptime
 
         if (positional_index >= positional_fields.len) return error.TooManyPositionals;
 
-        var matched = false;
         inline for (positional_fields, 0..) |field, pi| {
             if (pi == positional_index) {
                 @field(result, field.name) = try parse_value(field.type, arg);
-                matched = true;
             }
         }
-        if (matched) {
-            positional_index += 1;
-            positional_only = true;
-        }
+        positional_index += 1;
+        positional_only = true;
     }
 
     // Build slices and apply defaults.
