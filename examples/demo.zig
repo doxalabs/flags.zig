@@ -15,11 +15,7 @@ const CLI = struct {
         },
 
         pub const help =
-            \\Usage: demo [options] <command> [command-options]
-            \\
-            \\Options:
-            \\  --verbose    Enable verbose output (default: false)
-            \\  --config     Path to config file (optional)
+            \\Usage: serve  <flags>
             \\
             \\Commands:
             \\  serve        Start a server
@@ -30,6 +26,22 @@ const CLI = struct {
             \\      --times  Number of times to greet (default: 1)
         ;
     },
+
+    pub const help =
+        \\Usage: demo [options] <command> [command-options]
+        \\
+        \\Options:
+        \\  --verbose    Enable verbose output (default: false)
+        \\  --config     Path to config file (optional)
+        \\
+        // \\Commands:
+        // \\  serve        Start a server
+        // \\      --host   Hostname to bind (default: localhost)
+        // \\      --port   Port to listen on (default: 8080)
+        // \\  greet        Print a greeting
+        // \\      --name   Name to greet (default: world)
+        // \\      --times  Number of times to greet (default: 1)
+    ;
 };
 
 pub fn main() !void {
@@ -41,13 +53,8 @@ pub fn main() !void {
     defer std.process.argsFree(allocator, args);
 
     const cli = flags.parse(allocator, args, CLI) catch |err| {
-        switch (err) {
-            error.HelpRequested => std.process.exit(0),
-            else => {
-                std.debug.print("error: {s}\n", .{@errorName(err)});
-                std.process.exit(1);
-            },
-        }
+        std.debug.print("error: {s}\n", .{@errorName(err)});
+        std.process.exit(1);
     };
     defer flags.deinit(allocator, cli);
 

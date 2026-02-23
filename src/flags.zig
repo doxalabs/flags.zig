@@ -114,7 +114,7 @@ fn parse_struct(allocator: std.mem.Allocator, args: []const []const u8, comptime
     while (i < args.len) : (i += 1) {
         const arg = args[i];
 
-        if (is_help_arg(arg)) return print_help(T);
+        if (is_help_arg(arg)) print_help(T);
 
         if (std.mem.eql(u8, arg, "--")) {
             if (positional_fields.len == 0) return error.UnexpectedArgument;
@@ -306,7 +306,7 @@ fn parse_commands(allocator: std.mem.Allocator, args: []const []const u8, compti
     if (args.len == 0) return error.MissingSubcommand;
 
     const arg = args[0];
-    if (is_help_arg(arg)) return print_help(T);
+    if (is_help_arg(arg)) print_help(T);
 
     inline for (fields) |field| {
         if (std.mem.eql(u8, arg, field.name)) {
@@ -360,20 +360,15 @@ fn is_help_arg(arg: []const u8) bool {
     return std.mem.eql(u8, arg, "-h") or std.mem.eql(u8, arg, "--help");
 }
 
-/// Print help text and return `error.HelpRequested` so the caller can stop parsing.
-fn print_help(comptime T: type) error{HelpRequested} {
-    var buffer: [1024]u8 = undefined;
-    var stdout = std.fs.File.stdout();
-    var writer = stdout.writer(&buffer).interface;
-
+/// Print help text and exit.
+fn print_help(comptime T: type) void {
     if (@hasDecl(T, "help")) {
-        writer.writeAll(T.help) catch {};
-        writer.writeAll("\n") catch {};
+        std.debug.print("{s}\n", .{T.help});
     } else {
-        writer.writeAll("No help available. Declare `pub const help` on your type.\n") catch {};
+        std.debug.print("No help available. Declare `pub const help` on your type.\n", .{});
     }
 
-    return error.HelpRequested;
+    std.process.exit(0);
 }
 
 // =============================================================================
@@ -393,7 +388,6 @@ test "auto help generation" {
         verbose: bool = false,
         pub const help = "Usage: myapp";
     };
-    try std.testing.expectEqual(error.HelpRequested, print_help(Args2));
     try std.testing.expect(@hasDecl(Args2, "help") == true);
 }
 
@@ -1174,9 +1168,9 @@ test "multi-slice error path does not leak" {
 test "slice_lists array with non-slice and slice fields" {
     const allocator = std.testing.allocator;
     const Args = struct {
-        verbose: bool = false,      // non-slice at index 0
-        files: []const []const u8 = &[_][]const u8{},  // slice at index 1
-        name: []const u8 = "default",  // slice at index 2
+        verbose: bool = false, // non-slice at index 0
+        files: []const []const u8 = &[_][]const u8{}, // slice at index 1
+        name: []const u8 = "default", // slice at index 2
     };
 
     // This should work without undefined behavior in slice_lists array
