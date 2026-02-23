@@ -96,7 +96,7 @@ fn parse_struct(allocator: std.mem.Allocator, args: []const []const u8, comptime
     var positional_only = false;
 
     // Initialize accumulators for slice fields.
-    var slice_lists: [named_fields.len]std.ArrayList([]const u8) = undefined;
+    var slice_lists = std.mem.zeroes([named_fields.len]std.ArrayList([]const u8));
     inline for (named_fields, 0..) |field, fi| {
         if (comptime is_slice_type(field.type)) {
             slice_lists[fi] = .{};
@@ -1170,4 +1170,21 @@ test "multi-slice error path does not leak" {
         error.InvalidValue,
         parse(allocator, &.{ "prog", "--files=a.txt,b.txt", "--ports=80,bad" }, Args),
     );
+}
+
+test "slice_lists array with non-slice and slice fields" {
+    const allocator = std.testing.allocator;
+    const Args = struct {
+        verbose: bool = false,      // non-slice at index 0
+        files: []const []const u8 = &[_][]const u8{},  // slice at index 1
+        name: []const u8 = "default",  // slice at index 2
+    };
+
+    // This should work without undefined behavior in slice_lists array
+    const result = try parse(allocator, &.{ "prog", "--files=a.txt,b.txt", "--name=test" }, Args);
+    defer deinit(allocator, result);
+
+    try std.testing.expect(result.verbose == false);
+    try std.testing.expectEqual(2, result.files.len);
+    try std.testing.expectEqualSlices(u8, result.name, "test");
 }
