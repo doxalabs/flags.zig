@@ -452,36 +452,21 @@ test "parse enum with default" {
 
 test "parse optional types" {
     const allocator = std.testing.allocator;
-
-    const ArgsString = struct {
+    const Args = struct {
         config: ?[]const u8 = null,
-    };
-    const flags1 = try parse(allocator, &.{"prog"}, ArgsString);
-    try std.testing.expectEqual(null, flags1.config);
-
-    const flags2 = try parse(allocator, &.{ "prog", "--config=/path/to/config" }, ArgsString);
-    try std.testing.expect(flags2.config != null);
-    try std.testing.expectEqualStrings("/path/to/config", flags2.config.?);
-
-    const ArgsInt = struct {
         count: ?u32 = null,
-    };
-    const flags3 = try parse(allocator, &.{"prog"}, ArgsInt);
-    try std.testing.expectEqual(null, flags3.count);
-
-    const flags4 = try parse(allocator, &.{ "prog", "--count=42" }, ArgsInt);
-    try std.testing.expect(flags4.count != null);
-    try std.testing.expectEqual(42, flags4.count.?);
-
-    const ArgsBool = struct {
         verbose: ?bool = null,
     };
-    const flags5 = try parse(allocator, &.{"prog"}, ArgsBool);
-    try std.testing.expectEqual(null, flags5.verbose);
 
-    const flags6 = try parse(allocator, &.{ "prog", "--verbose" }, ArgsBool);
-    try std.testing.expect(flags6.verbose != null);
-    try std.testing.expectEqual(true, flags6.verbose.?);
+    const flags1 = try parse(allocator, &.{"prog"}, Args);
+    try std.testing.expectEqual(null, flags1.config);
+    try std.testing.expectEqual(null, flags1.count);
+    try std.testing.expectEqual(null, flags1.verbose);
+
+    const flags2 = try parse(allocator, &.{ "prog", "--config=/path/to/config", "--count=42", "--verbose" }, Args);
+    try std.testing.expectEqualStrings("/path/to/config", flags2.config.?);
+    try std.testing.expectEqual(42, flags2.count.?);
+    try std.testing.expectEqual(true, flags2.verbose.?);
 }
 
 test "parse boolean formats" {
