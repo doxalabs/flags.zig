@@ -71,11 +71,6 @@ fn separator_index(comptime fields: []const std.builtin.Type.StructField) ?usize
 
 /// Parse a struct schema of named flags and optional positional args.
 fn parse_struct(allocator: std.mem.Allocator, args: []const []const u8, comptime T: type) !T {
-    // Ensure the given type is a struct at compile time.
-    comptime if (@typeInfo(T) != .@"struct") {
-        @compileError("flag definitions must be a struct");
-    };
-
     const fields = std.meta.fields(T);
     const marker_idx = comptime separator_index(fields);
     const named_fields = if (marker_idx) |idx| fields[0..idx] else fields;
