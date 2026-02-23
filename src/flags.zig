@@ -316,11 +316,17 @@ fn is_help_arg(arg: []const u8) bool {
 
 /// Print help text and return `error.HelpRequested` so the caller can stop parsing.
 fn print_help(comptime T: type) error{HelpRequested} {
+    var buffer: [1024]u8 = undefined;
+    var stdout = std.fs.File.stdout();
+    var writer = stdout.writer(&buffer).interface;
+
     if (@hasDecl(T, "help")) {
-        std.debug.print("{s}\n", .{T.help});
+        writer.writeAll(T.help) catch {};
+        writer.writeAll("\n") catch {};
     } else {
-        std.debug.print("No help available. Declare `pub const help` on your type.\n", .{});
+        writer.writeAll("No help available. Declare `pub const help` on your type.\n") catch {};
     }
+
     return error.HelpRequested;
 }
 
