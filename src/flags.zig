@@ -132,7 +132,7 @@ fn parse_struct(allocator: std.mem.Allocator, args: []const []const u8, comptime
             continue;
         }
 
-        if (std.mem.startsWith(u8, arg, "-")) return error.UnexpectedArgument;
+        if (!positional_only and std.mem.startsWith(u8, arg, "-")) return error.UnexpectedArgument;
 
         if (comptime subcmd_idx) |si| {
             const subcmd_field = named_fields[si];
@@ -317,7 +317,7 @@ fn is_help_arg(arg: []const u8) bool {
 /// Print help text and return `error.HelpRequested` so the caller can stop parsing.
 fn print_help(comptime T: type) error{HelpRequested} {
     if (@hasDecl(T, "help")) {
-        std.debug.print("{s}", .{T.help});
+        std.debug.print("{s}\n", .{T.help});
     } else {
         std.debug.print("No help available. Declare `pub const help` on your type.\n", .{});
     }
@@ -945,6 +945,39 @@ test "positional with explicit separator" {
     const result = try parse(allocator, &.{ "prog", "--verbose", "--", "main.zig" }, Args);
     try std.testing.expect(result.verbose == true);
     try std.testing.expect(std.mem.eql(u8, result.input, "main.zig"));
+}
+
+test "positional with negative number after separator" {
+    const allocator = std.testing.allocator;
+    const Args = struct {
+        @"--": void,
+        value: i32,
+    };
+
+    const result = try parse(allocator, &.{ "prog", "--", "-5" }, Args);
+    try std.testing.expect(result.value == -5);
+}
+
+test "positional with negative float after separator" {
+    const allocator = std.testing.allocator;
+    const Args = struct {
+        @"--": void,
+        value: f64,
+    };
+
+    const result = try parse(allocator, &.{ "prog", "--", "-3.14" }, Args);
+    try std.testing.expect(result.value == -3.14);
+}
+
+test "positional with dash-prefixed string after separator" {
+    const allocator = std.testing.allocator;
+    const Args = struct {
+        @"--": void,
+        name: []const u8,
+    };
+
+    const result = try parse(allocator, &.{ "prog", "--", "-filename" }, Args);
+    try std.testing.expect(std.mem.eql(u8, result.name, "-filename"));
 }
 
 test "positional with default" {
