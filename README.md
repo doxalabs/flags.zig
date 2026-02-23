@@ -2,33 +2,10 @@
 
 A type-safe command-line argument parser for Zig. Taking inspiration from **Rust clap**, and **TigerBeetle's flags** implementation, it lets you define flags using a struct or union(enum) and parses command-line arguments into it.
 
----
-
-## Table of Contents
-
-- [Overview](#overview)
-- [Features](#features)
-- [Installation](#installation)
-- [Quick Start](#quick-start)
-- [Usage Examples](#usage-examples)
-- [Advanced Features](#advanced-features)
-- [Documentation](#documentation)
-- [Credits](#credits)
-
----
-
-## Overview
-
-**flags.zig** provides a declarative, type-safe approach to command-line parsing by leveraging Zig's powerful comptime capabilities. Define your CLI interface as a struct with defaults and types, and let the library handle the rest.
-
-### Why flags.zig?
-
-- Zero runtime overhead—parsing happens at comptime where possible
-- Type safety—catch errors at compile time, not runtime
-- Idiomatic Zig—works with the grain of the language
+- Zero runtime overhead — parsing happens at comptime where possible
+- Type safety — catch errors at compile time, not runtime
+- Idiomatic Zig — works with the grain of the language
 - Zero external dependencies
-
----
 
 ## Features
 
@@ -40,8 +17,6 @@ A type-safe command-line argument parser for Zig. Taking inspiration from **Rust
 - [x] Subcommands via `union(enum)`
 - [x] Slice support (multiple values per flag)
 - [x] Two parsing patterns: repeated, comma-separated
-
----
 
 ## Installation
 
@@ -57,8 +32,6 @@ zig fetch --save git+https://github.com/atisans/flags.zig
 const flags = b.dependency("flags", .{});
 exe.root_module.addImport("flags", flags.module("flags"));
 ```
-
----
 
 ## Quick Start
 
@@ -94,77 +67,21 @@ pub fn main() !void {
 }
 ```
 
----
-
-## Usage Examples
-
-### Basic Flags
-
 ```bash
 ./program --name=alice --age=30 --active
-```
 
-### Individual Flag Types
-
-```bash
-# String flag
-./program --name=bob
-
-# Integer flag
-./program --age=40
-
-# Boolean flag (presence = true)
-./program --active
-```
-
-### Getting Help
-
-```bash
-./program --help # or -h
-```
-
-### Slice (Multiple Values) Support
-
-```zig
-const Args = struct {
-    files: []const []const u8 = &[_][]const u8{},
-    ports: []u16 = &[_]u16{8080},
-    tags: []const []const u8 = &[_][]const u8{},
-};
-```
-
-#### Two Syntax Patterns:
-
-```bash
-# Repeated flags (default)
+# Slices accept repeated flags or comma-separated values
 ./program --files=a.txt --files=b.txt --files=c.txt
-
-# Comma-separated values  
 ./program --files=a.txt,b.txt,c.txt
 ```
 
----
-
 ## Advanced Features
 
-### Type-Safe Arguments
-
-Leverage Zig's type system for compile-time guarantees:
-
-```zig
-const Args = struct {
-    // u16 enforces valid port range (0-65535)
-    port: u16 = 8080,
-    
-    // Optional types for nullable values
-    config: ?[]const u8 = null,
-    
-    // Enums for valid choices
-    format: enum { json, yaml, toml } = .json,
-};
-```
-
 ### Help Documentation
+
+Running with `-h` or `--help` prints your help text.
+
+If no help declaration is found, it prints "No help available" with a hint to declare one.
 
 Help text is defined by declaring `pub const help` on your struct or union type:
 
@@ -180,10 +97,6 @@ const Args = struct {
     ;
 };
 ```
-
-Running with `-h` or `--help` displays your help text and exits.
-
-If no help declaration is found, it prints "No help available" and exits.
 
 ### Subcommands
 
@@ -264,18 +177,7 @@ const Args = struct {
 // Usage: program --verbose input.txt output.txt
 ```
 
----
-
-## Documentation
-
-See [docs/](docs/) for detailed documentation:
-
-| Document | Description |
-|----------|-------------|
-| [docs/README.md](docs/README.md) | Usage guide and API reference |
-| [docs/DESIGN.md](docs/DESIGN.md) | Architecture and design decisions |
-
----
+See [docs/](docs/) for the full API reference and design details.
 
 ## Not Supported
 
@@ -283,24 +185,8 @@ See [docs/](docs/) for detailed documentation:
 - Space-separated values (`--name value` instead of `--name=value`)
 - Custom types - only built-in types and enums
 
----
-
 ## Credits
-
 This library draws significant inspiration from two exceptional projects:
 
-### TigerBeetle
-
-The design philosophy of struct-based flag definitions and zero-cost abstractions is heavily inspired by [TigerBeetle's flags implementation](https://github.com/tigerbeetle/tigerbeetle). Their approach to type-safe, performant CLI parsing in Zig demonstrates the power of leveraging Zig's comptime capabilities.
-
-### Rust clap
-
-The declarative API design and developer experience patterns are influenced by [Rust's clap crate](https://github.com/clap-rs/clap). Clap's ergonomic structopt-style derive patterns informed our approach to making CLI parsing intuitive while maintaining compile-time safety.
-
----
-
-<div align="center">
-
-Made with  for the Zig community
-
-</div>
+- [TigerBeetle's flags](https://github.com/tigerbeetle/tigerbeetle) — struct-based flag definitions and zero-cost abstractions
+- [Rust clap](https://github.com/clap-rs/clap) — declarative API design and derive-style patterns
