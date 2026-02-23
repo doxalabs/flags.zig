@@ -681,17 +681,33 @@ test "slice repeated flags" {
 
 test "slice comma separated" {
     const allocator = std.testing.allocator;
-    const Args = struct {
+
+    const StringArgs = struct {
         files: []const []const u8 = &[_][]const u8{},
     };
+    const str_result = try parse(allocator, &.{ "prog", "--files=a.txt,b.txt,c.txt" }, StringArgs);
+    defer deinit(allocator, str_result);
 
-    const result = try parse(allocator, &.{ "prog", "--files=a.txt,b.txt,c.txt" }, Args);
-    defer deinit(allocator, result);
+    try std.testing.expectEqual(3, str_result.files.len);
+    try std.testing.expectEqualStrings("a.txt", str_result.files[0]);
+    try std.testing.expectEqualStrings("b.txt", str_result.files[1]);
+    try std.testing.expectEqualStrings("c.txt", str_result.files[2]);
 
-    try std.testing.expectEqual(3, result.files.len);
-    try std.testing.expectEqualStrings("a.txt", result.files[0]);
-    try std.testing.expectEqualStrings("b.txt", result.files[1]);
-    try std.testing.expectEqualStrings("c.txt", result.files[2]);
+    const single_str_result = try parse(allocator, &.{ "prog", "--files=single.txt" }, StringArgs);
+    defer deinit(allocator, single_str_result);
+    try std.testing.expectEqual(1, single_str_result.files.len);
+    try std.testing.expectEqualStrings("single.txt", single_str_result.files[0]);
+
+    const IntArgs = struct {
+        ports: []const u16 = &[_]u16{},
+    };
+    const int_result = try parse(allocator, &.{ "prog", "--ports=80,443,8080" }, IntArgs);
+    defer deinit(allocator, int_result);
+
+    try std.testing.expectEqual(3, int_result.ports.len);
+    try std.testing.expectEqual(80, int_result.ports[0]);
+    try std.testing.expectEqual(443, int_result.ports[1]);
+    try std.testing.expectEqual(8080, int_result.ports[2]);
 }
 
 test "slice integer values" {
@@ -755,21 +771,6 @@ test "slice mixed with scalar flags" {
     try std.testing.expectEqual(3000, result.port);
 }
 
-test "slice comma separated integers" {
-    const allocator = std.testing.allocator;
-    const Args = struct {
-        ports: []const u16 = &[_]u16{},
-    };
-
-    const result = try parse(allocator, &.{ "prog", "--ports=80,443,8080" }, Args);
-    defer deinit(allocator, result);
-
-    try std.testing.expectEqual(3, result.ports.len);
-    try std.testing.expectEqual(80, result.ports[0]);
-    try std.testing.expectEqual(443, result.ports[1]);
-    try std.testing.expectEqual(8080, result.ports[2]);
-}
-
 test "slice invalid element" {
     const allocator = std.testing.allocator;
     const Args = struct {
@@ -777,19 +778,6 @@ test "slice invalid element" {
     };
 
     try std.testing.expectError(error.InvalidValue, parse(allocator, &.{ "prog", "--ports=80,not_a_number" }, Args));
-}
-
-test "slice single value" {
-    const allocator = std.testing.allocator;
-    const Args = struct {
-        tags: []const []const u8 = &[_][]const u8{},
-    };
-
-    const result = try parse(allocator, &.{ "prog", "--tags=only-one" }, Args);
-    defer deinit(allocator, result);
-
-    try std.testing.expectEqual(1, result.tags.len);
-    try std.testing.expectEqualStrings("only-one", result.tags[0]);
 }
 
 test "multiple slice fields" {
