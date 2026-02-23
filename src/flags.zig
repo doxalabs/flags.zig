@@ -714,7 +714,7 @@ test "slice repeated flags" {
     };
 
     const result = try parse(allocator, &.{ "prog", "--files=a.txt", "--files=b.txt", "--files=c.txt" }, Args);
-    defer allocator.free(result.files);
+    defer deinit(allocator, result);
 
     try std.testing.expectEqual(3, result.files.len);
     try std.testing.expect(std.mem.eql(u8, result.files[0], "a.txt"));
@@ -729,7 +729,7 @@ test "slice comma separated" {
     };
 
     const result = try parse(allocator, &.{ "prog", "--files=a.txt,b.txt,c.txt" }, Args);
-    defer allocator.free(result.files);
+    defer deinit(allocator, result);
 
     try std.testing.expectEqual(3, result.files.len);
     try std.testing.expect(std.mem.eql(u8, result.files[0], "a.txt"));
@@ -744,7 +744,7 @@ test "slice integer values" {
     };
 
     const result = try parse(allocator, &.{ "prog", "--ports=8080", "--ports=9090", "--ports=3000" }, Args);
-    defer allocator.free(result.ports);
+    defer deinit(allocator, result);
 
     try std.testing.expectEqual(3, result.ports.len);
     try std.testing.expectEqual(8080, result.ports[0]);
@@ -760,7 +760,7 @@ test "slice enum values" {
     };
 
     const result = try parse(allocator, &.{ "prog", "--formats=json,yaml,toml" }, Args);
-    defer allocator.free(result.formats);
+    defer deinit(allocator, result);
 
     try std.testing.expectEqual(3, result.formats.len);
     try std.testing.expectEqual(Format.json, result.formats[0]);
@@ -789,7 +789,7 @@ test "slice mixed with scalar flags" {
     };
 
     const result = try parse(allocator, &.{ "prog", "--files=a.txt", "--verbose", "--files=b.txt", "--port=3000" }, Args);
-    defer allocator.free(result.files);
+    defer deinit(allocator, result);
 
     try std.testing.expectEqual(2, result.files.len);
     try std.testing.expect(std.mem.eql(u8, result.files[0], "a.txt"));
@@ -805,7 +805,7 @@ test "slice comma separated integers" {
     };
 
     const result = try parse(allocator, &.{ "prog", "--ports=80,443,8080" }, Args);
-    defer allocator.free(result.ports);
+    defer deinit(allocator, result);
 
     try std.testing.expectEqual(3, result.ports.len);
     try std.testing.expectEqual(80, result.ports[0]);
@@ -829,7 +829,7 @@ test "slice single value" {
     };
 
     const result = try parse(allocator, &.{ "prog", "--tags=only-one" }, Args);
-    defer allocator.free(result.tags);
+    defer deinit(allocator, result);
 
     try std.testing.expectEqual(1, result.tags.len);
     try std.testing.expect(std.mem.eql(u8, result.tags[0], "only-one"));
@@ -843,8 +843,7 @@ test "multiple slice fields" {
     };
 
     const result = try parse(allocator, &.{ "prog", "--files=a.txt,b.txt", "--ports=80,443" }, Args);
-    defer allocator.free(result.files);
-    defer allocator.free(result.ports);
+    defer deinit(allocator, result);
 
     try std.testing.expectEqual(2, result.files.len);
     try std.testing.expect(std.mem.eql(u8, result.files[0], "a.txt"));
