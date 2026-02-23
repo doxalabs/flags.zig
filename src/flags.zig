@@ -382,13 +382,13 @@ test "auto help generation" {
         active: bool = false,
     };
 
-    try std.testing.expect(@hasDecl(Args, "help") == false);
+    try std.testing.expectEqual(false, @hasDecl(Args, "help"));
 
     const Args2 = struct {
         verbose: bool = false,
         pub const help = "Usage: myapp";
     };
-    try std.testing.expect(@hasDecl(Args2, "help") == true);
+    try std.testing.expectEqual(true, @hasDecl(Args2, "help"));
 }
 
 test "invalid flag" {
@@ -410,10 +410,10 @@ test "parse defaults" {
     };
 
     const flags = try parse(allocator, &.{"prog"}, Args);
-    try std.testing.expect(std.mem.eql(u8, flags.name, "joe"));
-    try std.testing.expect(flags.active == false);
-    try std.testing.expect(flags.port == 5000);
-    try std.testing.expect(flags.rate == 1.0);
+    try std.testing.expectEqualStrings("joe", flags.name);
+    try std.testing.expectEqual(false, flags.active);
+    try std.testing.expectEqual(5000, flags.port);
+    try std.testing.expectEqual(1.0, flags.rate);
 }
 
 test "parse primitives" {
@@ -426,10 +426,10 @@ test "parse primitives" {
     };
 
     const flags = try parse(allocator, &.{ "prog", "--name=test", "--port=9090", "--rate=2.5", "--active" }, Args);
-    try std.testing.expect(std.mem.eql(u8, flags.name, "test"));
-    try std.testing.expect(flags.port == 9090);
-    try std.testing.expect(flags.rate == 2.5);
-    try std.testing.expect(flags.active == true);
+    try std.testing.expectEqualStrings("test", flags.name);
+    try std.testing.expectEqual(9090, flags.port);
+    try std.testing.expectEqual(2.5, flags.rate);
+    try std.testing.expectEqual(true, flags.active);
 }
 
 test "parse enum" {
@@ -440,7 +440,7 @@ test "parse enum" {
     };
 
     const flags = try parse(allocator, &.{ "prog", "--format=yaml" }, Args);
-    try std.testing.expect(flags.format == .yaml);
+    try std.testing.expectEqual(Format.yaml, flags.format);
 }
 
 test "parse enum with default" {
@@ -451,7 +451,7 @@ test "parse enum with default" {
     };
 
     const flags = try parse(allocator, &.{"prog"}, Args);
-    try std.testing.expect(flags.format == .json);
+    try std.testing.expectEqual(Format.json, flags.format);
 }
 
 test "parse optional string" {
@@ -461,11 +461,11 @@ test "parse optional string" {
     };
 
     const flags1 = try parse(allocator, &.{"prog"}, Args);
-    try std.testing.expect(flags1.config == null);
+    try std.testing.expectEqual(null, flags1.config);
 
     const flags2 = try parse(allocator, &.{ "prog", "--config=/path/to/config" }, Args);
     try std.testing.expect(flags2.config != null);
-    try std.testing.expect(std.mem.eql(u8, flags2.config.?, "/path/to/config"));
+    try std.testing.expectEqualStrings("/path/to/config", flags2.config.?);
 }
 
 test "parse optional int" {
@@ -475,11 +475,11 @@ test "parse optional int" {
     };
 
     const flags1 = try parse(allocator, &.{"prog"}, Args);
-    try std.testing.expect(flags1.count == null);
+    try std.testing.expectEqual(null, flags1.count);
 
     const flags2 = try parse(allocator, &.{ "prog", "--count=42" }, Args);
     try std.testing.expect(flags2.count != null);
-    try std.testing.expect(flags2.count.? == 42);
+    try std.testing.expectEqual(42, flags2.count.?);
 }
 
 test "parse optional bool" {
@@ -489,11 +489,11 @@ test "parse optional bool" {
     };
 
     const flags1 = try parse(allocator, &.{"prog"}, Args);
-    try std.testing.expect(flags1.verbose == null);
+    try std.testing.expectEqual(null, flags1.verbose);
 
     const flags2 = try parse(allocator, &.{ "prog", "--verbose" }, Args);
     try std.testing.expect(flags2.verbose != null);
-    try std.testing.expect(flags2.verbose.? == true);
+    try std.testing.expectEqual(true, flags2.verbose.?);
 }
 
 test "parse boolean formats" {
@@ -503,13 +503,13 @@ test "parse boolean formats" {
     };
 
     const flags1 = try parse(allocator, &.{ "prog", "--flag" }, Args);
-    try std.testing.expect(flags1.flag == true);
+    try std.testing.expectEqual(true, flags1.flag);
 
     const flags2 = try parse(allocator, &.{ "prog", "--flag=true" }, Args);
-    try std.testing.expect(flags2.flag == true);
+    try std.testing.expectEqual(true, flags2.flag);
 
     const flags3 = try parse(allocator, &.{ "prog", "--flag=false" }, Args);
-    try std.testing.expect(flags3.flag == false);
+    try std.testing.expectEqual(false, flags3.flag);
 }
 
 test "parse subcommand" {
@@ -525,11 +525,11 @@ test "parse subcommand" {
     };
 
     const result1 = try parse(allocator, &.{ "prog", "start", "--host=0.0.0.0", "--port=3000" }, CLI);
-    try std.testing.expect(std.mem.eql(u8, result1.start.host, "0.0.0.0"));
-    try std.testing.expect(result1.start.port == 3000);
+    try std.testing.expectEqualStrings("0.0.0.0", result1.start.host);
+    try std.testing.expectEqual(3000, result1.start.port);
 
     const result2 = try parse(allocator, &.{ "prog", "stop", "--force" }, CLI);
-    try std.testing.expect(result2.stop.force == true);
+    try std.testing.expectEqual(true, result2.stop.force);
 }
 
 test "parse subcommand with defaults" {
@@ -543,8 +543,8 @@ test "parse subcommand with defaults" {
     };
 
     const result = try parse(allocator, &.{ "prog", "start" }, CLI);
-    try std.testing.expect(std.mem.eql(u8, result.start.host, "localhost"));
-    try std.testing.expect(result.start.port == 8080);
+    try std.testing.expectEqualStrings("localhost", result.start.host);
+    try std.testing.expectEqual(8080, result.start.port);
 }
 
 test "void subcommand variant" {
@@ -557,10 +557,10 @@ test "void subcommand variant" {
     };
 
     const result = try parse(allocator, &.{ "prog", "stop" }, CLI);
-    try std.testing.expect(result == .stop);
+    try std.testing.expectEqual(CLI.stop, result);
 
     const result2 = try parse(allocator, &.{ "prog", "start" }, CLI);
-    try std.testing.expect(result2.start.port == 8080);
+    try std.testing.expectEqual(8080, result2.start.port);
 }
 
 test "void subcommand variant with extra args" {
@@ -656,16 +656,6 @@ test "missing required flag" {
     try std.testing.expectError(error.MissingRequiredFlag, parse(allocator, &.{"prog"}, Args));
 }
 
-test "help declaration exists" {
-    const Args = struct {
-        verbose: bool = false,
-        pub const help = "Test help message";
-    };
-
-    try std.testing.expect(@hasDecl(Args, "help"));
-    try std.testing.expect(std.mem.eql(u8, Args.help, "Test help message"));
-}
-
 test "complex subcommand structure" {
     const allocator = std.testing.allocator;
     const CLI = union(enum) {
@@ -686,8 +676,8 @@ test "complex subcommand structure" {
     };
 
     const result = try parse(allocator, &.{ "prog", "server", "start", "--port=9090" }, CLI);
-    try std.testing.expect(std.mem.eql(u8, result.server.start.host, "0.0.0.0"));
-    try std.testing.expect(result.server.start.port == 9090);
+    try std.testing.expectEqualStrings("0.0.0.0", result.server.start.host);
+    try std.testing.expectEqual(9090, result.server.start.port);
 }
 
 test "unexpected argument error" {
@@ -711,9 +701,9 @@ test "slice repeated flags" {
     defer deinit(allocator, result);
 
     try std.testing.expectEqual(3, result.files.len);
-    try std.testing.expect(std.mem.eql(u8, result.files[0], "a.txt"));
-    try std.testing.expect(std.mem.eql(u8, result.files[1], "b.txt"));
-    try std.testing.expect(std.mem.eql(u8, result.files[2], "c.txt"));
+    try std.testing.expectEqualStrings("a.txt", result.files[0]);
+    try std.testing.expectEqualStrings("b.txt", result.files[1]);
+    try std.testing.expectEqualStrings("c.txt", result.files[2]);
 }
 
 test "slice comma separated" {
@@ -726,9 +716,9 @@ test "slice comma separated" {
     defer deinit(allocator, result);
 
     try std.testing.expectEqual(3, result.files.len);
-    try std.testing.expect(std.mem.eql(u8, result.files[0], "a.txt"));
-    try std.testing.expect(std.mem.eql(u8, result.files[1], "b.txt"));
-    try std.testing.expect(std.mem.eql(u8, result.files[2], "c.txt"));
+    try std.testing.expectEqualStrings("a.txt", result.files[0]);
+    try std.testing.expectEqualStrings("b.txt", result.files[1]);
+    try std.testing.expectEqualStrings("c.txt", result.files[2]);
 }
 
 test "slice integer values" {
@@ -786,9 +776,9 @@ test "slice mixed with scalar flags" {
     defer deinit(allocator, result);
 
     try std.testing.expectEqual(2, result.files.len);
-    try std.testing.expect(std.mem.eql(u8, result.files[0], "a.txt"));
-    try std.testing.expect(std.mem.eql(u8, result.files[1], "b.txt"));
-    try std.testing.expect(result.verbose == true);
+    try std.testing.expectEqualStrings("a.txt", result.files[0]);
+    try std.testing.expectEqualStrings("b.txt", result.files[1]);
+    try std.testing.expectEqual(true, result.verbose);
     try std.testing.expectEqual(3000, result.port);
 }
 
@@ -826,7 +816,7 @@ test "slice single value" {
     defer deinit(allocator, result);
 
     try std.testing.expectEqual(1, result.tags.len);
-    try std.testing.expect(std.mem.eql(u8, result.tags[0], "only-one"));
+    try std.testing.expectEqualStrings("only-one", result.tags[0]);
 }
 
 test "multiple slice fields" {
@@ -840,8 +830,8 @@ test "multiple slice fields" {
     defer deinit(allocator, result);
 
     try std.testing.expectEqual(2, result.files.len);
-    try std.testing.expect(std.mem.eql(u8, result.files[0], "a.txt"));
-    try std.testing.expect(std.mem.eql(u8, result.files[1], "b.txt"));
+    try std.testing.expectEqualStrings("a.txt", result.files[0]);
+    try std.testing.expectEqualStrings("b.txt", result.files[1]);
     try std.testing.expectEqual(2, result.ports.len);
     try std.testing.expectEqual(80, result.ports[0]);
     try std.testing.expectEqual(443, result.ports[1]);
@@ -864,10 +854,10 @@ test "global flags with subcommand" {
     };
 
     const result = try parse(allocator, &.{ "prog", "--verbose", "--config=app.toml", "serve", "--port=3000" }, CLI);
-    try std.testing.expect(result.verbose == true);
-    try std.testing.expect(std.mem.eql(u8, result.config.?, "app.toml"));
-    try std.testing.expect(std.mem.eql(u8, result.command.serve.host, "0.0.0.0"));
-    try std.testing.expect(result.command.serve.port == 3000);
+    try std.testing.expectEqual(true, result.verbose);
+    try std.testing.expectEqualStrings("app.toml", result.config.?);
+    try std.testing.expectEqualStrings("0.0.0.0", result.command.serve.host);
+    try std.testing.expectEqual(3000, result.command.serve.port);
 }
 
 test "subcommand with defaults and global flags" {
@@ -884,9 +874,9 @@ test "subcommand with defaults and global flags" {
     };
 
     const result = try parse(allocator, &.{ "prog", "serve" }, CLI);
-    try std.testing.expect(result.verbose == false);
-    try std.testing.expect(std.mem.eql(u8, result.command.serve.host, "localhost"));
-    try std.testing.expect(result.command.serve.port == 8080);
+    try std.testing.expectEqual(false, result.verbose);
+    try std.testing.expectEqualStrings("localhost", result.command.serve.host);
+    try std.testing.expectEqual(8080, result.command.serve.port);
 }
 
 test "required subcommand missing" {
@@ -913,8 +903,8 @@ test "optional subcommand not given" {
     };
 
     const result = try parse(allocator, &.{ "prog", "--verbose" }, CLI);
-    try std.testing.expect(result.verbose == true);
-    try std.testing.expect(result.command == null);
+    try std.testing.expectEqual(true, result.verbose);
+    try std.testing.expectEqual(null, result.command);
 }
 
 test "unknown subcommand with global flags" {
@@ -946,8 +936,8 @@ test "subcommand with nested union" {
     };
 
     const result = try parse(allocator, &.{ "prog", "--verbose", "server", "start", "--port=3000" }, CLI);
-    try std.testing.expect(result.verbose == true);
-    try std.testing.expect(result.command.server.start.port == 3000);
+    try std.testing.expectEqual(true, result.verbose);
+    try std.testing.expectEqual(3000, result.command.server.start.port);
 }
 
 // --- Positional tests ---
@@ -962,9 +952,9 @@ test "positional basic" {
     };
 
     const result = try parse(allocator, &.{ "prog", "--verbose", "main.zig" }, Args);
-    try std.testing.expect(result.verbose == true);
-    try std.testing.expect(std.mem.eql(u8, result.input, "main.zig"));
-    try std.testing.expect(std.mem.eql(u8, result.output, "out.txt"));
+    try std.testing.expectEqual(true, result.verbose);
+    try std.testing.expectEqualStrings("main.zig", result.input);
+    try std.testing.expectEqualStrings("out.txt", result.output);
 }
 
 test "positional multiple" {
@@ -976,8 +966,8 @@ test "positional multiple" {
     };
 
     const result = try parse(allocator, &.{ "prog", "main.zig", "build.bin" }, Args);
-    try std.testing.expect(std.mem.eql(u8, result.input, "main.zig"));
-    try std.testing.expect(std.mem.eql(u8, result.output, "build.bin"));
+    try std.testing.expectEqualStrings("main.zig", result.input);
+    try std.testing.expectEqualStrings("build.bin", result.output);
 }
 
 test "positional with explicit separator" {
@@ -989,8 +979,8 @@ test "positional with explicit separator" {
     };
 
     const result = try parse(allocator, &.{ "prog", "--verbose", "--", "main.zig" }, Args);
-    try std.testing.expect(result.verbose == true);
-    try std.testing.expect(std.mem.eql(u8, result.input, "main.zig"));
+    try std.testing.expectEqual(true, result.verbose);
+    try std.testing.expectEqualStrings("main.zig", result.input);
 }
 
 test "positional with negative number after separator" {
@@ -1001,7 +991,7 @@ test "positional with negative number after separator" {
     };
 
     const result = try parse(allocator, &.{ "prog", "--", "-5" }, Args);
-    try std.testing.expect(result.value == -5);
+    try std.testing.expectEqual(-5, result.value);
 }
 
 test "positional with negative float after separator" {
@@ -1012,7 +1002,7 @@ test "positional with negative float after separator" {
     };
 
     const result = try parse(allocator, &.{ "prog", "--", "-3.14" }, Args);
-    try std.testing.expect(result.value == -3.14);
+    try std.testing.expectEqual(-3.14, result.value);
 }
 
 test "positional with dash-prefixed string after separator" {
@@ -1023,7 +1013,7 @@ test "positional with dash-prefixed string after separator" {
     };
 
     const result = try parse(allocator, &.{ "prog", "--", "-filename" }, Args);
-    try std.testing.expect(std.mem.eql(u8, result.name, "-filename"));
+    try std.testing.expectEqualStrings("-filename", result.name);
 }
 
 test "positional with default" {
@@ -1035,8 +1025,8 @@ test "positional with default" {
     };
 
     const result = try parse(allocator, &.{ "prog", "main.zig" }, Args);
-    try std.testing.expect(std.mem.eql(u8, result.input, "main.zig"));
-    try std.testing.expect(std.mem.eql(u8, result.output, "a.out"));
+    try std.testing.expectEqualStrings("main.zig", result.input);
+    try std.testing.expectEqualStrings("a.out", result.output);
 }
 
 test "positional missing required" {
@@ -1074,10 +1064,10 @@ test "positional inside subcommand" {
     };
 
     const result = try parse(allocator, &.{ "prog", "--verbose", "compile", "--optimize", "main.zig" }, CLI);
-    try std.testing.expect(result.verbose == true);
-    try std.testing.expect(result.command.compile.optimize == true);
-    try std.testing.expect(std.mem.eql(u8, result.command.compile.input, "main.zig"));
-    try std.testing.expect(std.mem.eql(u8, result.command.compile.output, "a.out"));
+    try std.testing.expectEqual(true, result.verbose);
+    try std.testing.expectEqual(true, result.command.compile.optimize);
+    try std.testing.expectEqualStrings("main.zig", result.command.compile.input);
+    try std.testing.expectEqualStrings("a.out", result.command.compile.output);
 }
 
 // --- Deinit tests ---
@@ -1095,7 +1085,7 @@ test "deinit frees struct with slices" {
 
     try std.testing.expectEqual(2, result.files.len);
     try std.testing.expectEqual(2, result.ports.len);
-    try std.testing.expect(result.verbose == true);
+    try std.testing.expectEqual(true, result.verbose);
 }
 
 test "deinit frees subcommand with slices" {
@@ -1114,7 +1104,7 @@ test "deinit frees subcommand with slices" {
     const result = try parse(allocator, &.{ "prog", "--verbose", "serve", "--hosts=a.com,b.com" }, CLI);
     defer deinit(allocator, result);
 
-    try std.testing.expect(result.verbose == true);
+    try std.testing.expectEqual(true, result.verbose);
     try std.testing.expectEqual(2, result.command.serve.hosts.len);
 }
 
@@ -1147,8 +1137,8 @@ test "deinit with optional subcommand null" {
     const result = try parse(allocator, &.{ "prog", "--verbose" }, CLI);
     defer deinit(allocator, result);
 
-    try std.testing.expect(result.verbose == true);
-    try std.testing.expect(result.command == null);
+    try std.testing.expectEqual(true, result.verbose);
+    try std.testing.expectEqual(null, result.command);
 }
 
 test "multi-slice error path does not leak" {
@@ -1177,7 +1167,7 @@ test "slice_lists array with non-slice and slice fields" {
     const result = try parse(allocator, &.{ "prog", "--files=a.txt,b.txt", "--name=test" }, Args);
     defer deinit(allocator, result);
 
-    try std.testing.expect(result.verbose == false);
+    try std.testing.expectEqual(false, result.verbose);
     try std.testing.expectEqual(2, result.files.len);
     try std.testing.expectEqualSlices(u8, result.name, "test");
 }
