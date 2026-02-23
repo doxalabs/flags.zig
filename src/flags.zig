@@ -85,7 +85,7 @@ fn parse_struct(allocator: std.mem.Allocator, args: []const []const u8, comptime
     while (i < args.len) : (i += 1) {
         const arg = args[i];
 
-        if (is_help_arg(arg)) print_help(T);
+        if (is_help_arg(arg)) return print_help(T);
 
         if (std.mem.eql(u8, arg, "--")) {
             if (positional_fields.len == 0) return error.UnexpectedArgument;
@@ -263,7 +263,7 @@ fn parse_commands(allocator: std.mem.Allocator, args: []const []const u8, compti
     if (args.len == 0) return error.MissingSubcommand;
 
     const arg = args[0];
-    if (is_help_arg(arg)) print_help(T);
+    if (is_help_arg(arg)) return print_help(T);
 
     inline for (fields) |field| {
         if (std.mem.eql(u8, arg, field.name)) {
@@ -317,14 +317,14 @@ fn is_help_arg(arg: []const u8) bool {
     return std.mem.eql(u8, arg, "-h") or std.mem.eql(u8, arg, "--help");
 }
 
-/// Print help text.
-/// Requires `pub const help` on the type.
-fn print_help(comptime T: type) void {
+/// Print help text and return `error.HelpRequested` so the caller can stop parsing.
+fn print_help(comptime T: type) error{HelpRequested} {
     if (@hasDecl(T, "help")) {
         std.debug.print("{s}", .{T.help});
     } else {
         std.debug.print("No help available. Declare `pub const help` on your type.\n", .{});
     }
+    return error.HelpRequested;
 }
 
 // =============================================================================
@@ -344,7 +344,7 @@ test "auto help generation" {
         verbose: bool = false,
         pub const help = "Usage: myapp";
     };
-    print_help(Args2); // Verify it doesn't panic
+    try std.testing.expectEqual(error.HelpRequested, print_help(Args2));
     try std.testing.expect(@hasDecl(Args2, "help") == true);
 }
 
