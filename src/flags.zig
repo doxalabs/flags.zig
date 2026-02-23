@@ -22,6 +22,34 @@ pub fn parse(allocator: std.mem.Allocator, args: []const []const u8, comptime T:
     }
 }
 
+/// Free all memory allocated by `parse` for the given result.
+///
+/// Recursively frees slice fields in structs and the active union variant.
+/// Usage: `defer flags.deinit(allocator, result);`
+pub fn deinit(allocator: std.mem.Allocator, value: anytype) void {
+    const T = @TypeOf(value);
+    switch (@typeInfo(T)) {
+        .@"struct" => {
+            inline for (std.meta.fields(T)) |field| {
+                if (comptime is_slice_type(field.type)) {
+                    allocator.free(@field(value, field.name));
+                } else {
+                    deinit(allocator, @field(value, field.name));
+                }
+            }
+        },
+        .@"union" => |u| {
+            if (u.tag_type != null) {
+                switch (value) {
+                    inline else => |v| deinit(allocator, v),
+                }
+            }
+        },
+        .optional => if (value) |v| deinit(allocator, v),
+        else => {},
+    }
+}
+
 /// Apply default value or null for optional fields, otherwise return the given error.
 fn apply_default(comptime field: std.builtin.Type.StructField, result: anytype, comptime error_type: anyerror) !void {
     if (field.defaultValue()) |default| {
@@ -190,7 +218,13 @@ fn parse_struct(allocator: std.mem.Allocator, args: []const []const u8, comptime
                 }
                 @field(result, field.name) = typed;
             } else {
-                try apply_default(field, &result, error.MissingRequiredFlag);
+                const child = comptime @typeInfo(field.type).pointer.child;
+                if (field.defaultValue()) |default| {
+                    const default_slice: field.type = default;
+                    @field(result, field.name) = try allocator.dupe(child, default_slice);
+                } else {
+                    return error.MissingRequiredFlag;
+                }
             }
         } else {
             if (!seen[field_index]) {
@@ -740,7 +774,8 @@ test "slice with default" {
     };
 
     const result = try parse(allocator, &.{"prog"}, Args);
-    // Default is used (no allocation), nothing to free.
+    defer deinit(allocator, result);
+
     try std.testing.expectEqual(0, result.files.len);
 }
 
@@ -1049,4 +1084,75 @@ test "positional inside subcommand" {
     try std.testing.expect(result.command.compile.optimize == true);
     try std.testing.expect(std.mem.eql(u8, result.command.compile.input, "main.zig"));
     try std.testing.expect(std.mem.eql(u8, result.command.compile.output, "a.out"));
+}
+
+// --- Deinit tests ---
+
+test "deinit frees struct with slices" {
+    const allocator = std.testing.allocator;
+    const Args = struct {
+        files: []const []const u8 = &[_][]const u8{},
+        ports: []const u16 = &[_]u16{},
+        verbose: bool = false,
+    };
+
+    const result = try parse(allocator, &.{ "prog", "--files=a.txt,b.txt", "--ports=80,443", "--verbose" }, Args);
+    defer deinit(allocator, result);
+
+    try std.testing.expectEqual(2, result.files.len);
+    try std.testing.expectEqual(2, result.ports.len);
+    try std.testing.expect(result.verbose == true);
+}
+
+test "deinit frees subcommand with slices" {
+    const allocator = std.testing.allocator;
+    const CLI = struct {
+        verbose: bool = false,
+        command: union(enum) {
+            serve: struct {
+                hosts: []const []const u8 = &[_][]const u8{},
+                port: u16 = 8080,
+            },
+            stop: struct {},
+        },
+    };
+
+    const result = try parse(allocator, &.{ "prog", "--verbose", "serve", "--hosts=a.com,b.com" }, CLI);
+    defer deinit(allocator, result);
+
+    try std.testing.expect(result.verbose == true);
+    try std.testing.expectEqual(2, result.command.serve.hosts.len);
+}
+
+test "deinit with defaults only" {
+    const allocator = std.testing.allocator;
+    const Args = struct {
+        files: []const []const u8 = &[_][]const u8{},
+        ports: []const u16 = &[_]u16{},
+        name: []const u8 = "default",
+    };
+
+    const result = try parse(allocator, &.{"prog"}, Args);
+    defer deinit(allocator, result);
+
+    try std.testing.expectEqual(0, result.files.len);
+    try std.testing.expectEqual(0, result.ports.len);
+}
+
+test "deinit with optional subcommand null" {
+    const allocator = std.testing.allocator;
+    const CLI = struct {
+        verbose: bool = false,
+        command: ?union(enum) {
+            serve: struct {
+                hosts: []const []const u8 = &[_][]const u8{},
+            },
+        } = null,
+    };
+
+    const result = try parse(allocator, &.{ "prog", "--verbose" }, CLI);
+    defer deinit(allocator, result);
+
+    try std.testing.expect(result.verbose == true);
+    try std.testing.expect(result.command == null);
 }
