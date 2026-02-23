@@ -60,6 +60,7 @@ pub fn main() !void {
     defer std.process.argsFree(allocator, args);
 
     const parsed = try flags.parse(allocator, args, Args);
+    defer flags.deinit(allocator, parsed);
 
     std.debug.print("Hello {s}! Age: {d}, Active: {}\n", .{
         parsed.name, parsed.age, parsed.active
