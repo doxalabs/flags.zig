@@ -177,13 +177,42 @@ const Args = struct {
 // Usage: program --verbose input.txt output.txt
 ```
 
-See [docs/](docs/) for the full API reference and design details.
+## Best Practices
 
-## Not Supported
+### DO
 
-- Short flags (e.g., `-v` for verbose) - only `-h` for help
-- Space-separated values (`--name value` instead of `--name=value`)
-- Custom types - only built-in types and enums
+1. **Use struct defaults** for common values
+2. **Define help** via `pub const help` declarations
+3. **Use unions** for mutually exclusive subcommands
+4. **Leverage enums** for constrained choices
+5. **Use optional types** for truly optional flags
+
+### DON'T
+
+1. **Don't** skip error handling
+2. **Don't** make all flags optional (defeats type safety)
+3. **Don't** use runtime string manipulation for help
+
+## Parser vs Application Boundary
+
+The parser handles syntax; the application handles semantics. Keep these in application code:
+
+- Date/time interpretation (`--due=tomorrow`)
+- File I/O, encryption, network calls
+- Interactive prompts and terminal I/O
+- Output formatting and display
+- Command aliases (`t` → `task`)
+- Configuration file loading
+
+The parser extracts typed values. What you do with them is your business.
+
+## Not planned
+
+- **No short flags** — only long flags (`--flag=value`), except `-h` for help
+- **No custom types** — only built-in types and enums
+- **No nested slices** — slices of slices not supported (`[][]T`)
+- **Equals syntax only** — use `--name=value` not `--name value`
+- **No void union variants** — use `struct {}` for no-arg subcommands. see [Issue](https://github.com/atisans/flags.zig/issues/6)
 
 ## Credits
 This library draws significant inspiration from two exceptional projects:
