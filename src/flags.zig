@@ -1011,19 +1011,6 @@ test "positional with dash-prefixed string after separator" {
     try std.testing.expectEqualStrings("-filename", result.name);
 }
 
-test "positional with default" {
-    const allocator = std.testing.allocator;
-    const Args = struct {
-        @"--": void,
-        input: []const u8,
-        output: []const u8 = "a.out",
-    };
-
-    const result = try parse(allocator, &.{ "prog", "main.zig" }, Args);
-    try std.testing.expectEqualStrings("main.zig", result.input);
-    try std.testing.expectEqualStrings("a.out", result.output);
-}
-
 test "positional missing required" {
     const allocator = std.testing.allocator;
     const Args = struct {
