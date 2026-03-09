@@ -23,7 +23,7 @@ A type-safe command-line argument parser for Zig. Taking inspiration from **Rust
 ### 1. Fetch the library
 
 ```bash
-zig fetch --save git+https://github.com/atisans/flags.zig
+zig fetch --save git+https://github.com/doxalabs/flags.zig
 ```
 
 ### 2. Add to your `build.zig`
