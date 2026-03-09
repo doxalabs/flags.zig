@@ -34,13 +34,7 @@ const CLI = struct {
         \\  --verbose    Enable verbose output (default: false)
         \\  --config     Path to config file (optional)
         \\
-        // \\Commands:
-        // \\  serve        Start a server
-        // \\      --host   Hostname to bind (default: localhost)
-        // \\      --port   Port to listen on (default: 8080)
-        // \\  greet        Print a greeting
-        // \\      --name   Name to greet (default: world)
-        // \\      --times  Number of times to greet (default: 1)
+        \\Run `demo <command> --help` to see command-specific options.
     ;
 };
 

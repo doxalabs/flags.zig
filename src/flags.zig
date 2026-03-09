@@ -83,6 +83,9 @@ fn parse_struct(allocator: std.mem.Allocator, args: []const []const u8, comptime
     }
 
     const subcmd_idx = comptime subcommand_field_index(named_fields);
+    if (comptime subcmd_idx != null and positional_fields.len > 0) {
+        @compileError("subcommands and positional arguments cannot coexist in the same struct");
+    }
 
     var result: T = undefined;
     var seen = std.mem.zeroes([named_fields.len]bool);
@@ -289,7 +292,7 @@ fn parse_subcommand(
             }
             break :blk try parse_commands(allocator, args, field.type);
         },
-        .void => if (args.len > 0 and !is_help_arg(args[0])) error.UnexpectedArgument else {},
+        .void => if (args.len > 0) error.UnexpectedArgument else {},
         else => @compileError("subcommand types must be struct, union(enum), or void"),
     };
 }
@@ -544,6 +547,16 @@ test "void subcommand variant with extra args" {
     };
 
     try std.testing.expectError(error.UnexpectedArgument, parse(allocator, &.{ "prog", "stop", "--force" }, CLI));
+}
+
+test "void subcommand variant rejects help arg" {
+    const allocator = std.testing.allocator;
+    const CLI = union(enum) {
+        start: struct { port: u16 = 8080 },
+        stop: void,
+    };
+
+    try std.testing.expectError(error.UnexpectedArgument, parse(allocator, &.{ "prog", "stop", "--help" }, CLI));
 }
 
 test "missing subcommand" {
