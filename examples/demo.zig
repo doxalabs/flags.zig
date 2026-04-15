@@ -39,9 +39,8 @@ const CLI = struct {
 };
 
 pub fn main(init: std.process.Init) !void {
-    const allocator = init.gpa;
+    const allocator = init.arena.allocator();
     const args = try init.minimal.args.toSlice(allocator);
-    defer allocator.free(args);
 
     const cli = flags.parse(allocator, args, CLI) catch |err| {
         std.debug.print("error: {s}\n", .{@errorName(err)});
