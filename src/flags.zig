@@ -97,7 +97,7 @@ fn parse_struct(allocator: std.mem.Allocator, args: []const []const u8, comptime
     var slice_lists = std.mem.zeroes([named_fields.len]std.ArrayList([]const u8));
     inline for (named_fields, 0..) |field, fi| {
         if (comptime is_slice_type(field.type)) {
-            slice_lists[fi] = .{};
+            slice_lists[fi] = .empty;
         }
     }
     defer {
