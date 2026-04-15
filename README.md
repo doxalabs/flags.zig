@@ -39,10 +39,10 @@ exe.root_module.addImport("flags", flags.module("flags"));
 const std = @import("std");
 const flags = @import("flags");
 
-pub fn main() !void {
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    defer _ = gpa.deinit();
-    const allocator = gpa.allocator();
+pub fn main(init: std.process.Init) !void {
+    const allocator = init.gpa;
+    const args = try init.minimal.args.toSlice(allocator);
+    defer allocator.free(args);
 
     // Define flags as a struct with slice support
     const Args = struct {
@@ -54,10 +54,6 @@ pub fn main() !void {
         files: []const []const u8 = &[_][]const u8{},
         ports: []u16 = &[_]u16{8080},
     };
-
-    // Parse and use
-    const args = try std.process.argsAlloc(allocator);
-    defer std.process.argsFree(allocator, args);
 
     const parsed = try flags.parse(allocator, args, Args);
     defer flags.deinit(allocator, parsed);
