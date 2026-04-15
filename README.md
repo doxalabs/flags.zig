@@ -40,9 +40,8 @@ const std = @import("std");
 const flags = @import("flags");
 
 pub fn main(init: std.process.Init) !void {
-    const allocator = init.gpa;
+    const allocator = init.arena.allocator();
     const args = try init.minimal.args.toSlice(allocator);
-    defer allocator.free(args);
 
     // Define flags as a struct with slice support
     const Args = struct {
