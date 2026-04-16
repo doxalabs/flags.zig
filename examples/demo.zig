@@ -38,13 +38,9 @@ const CLI = struct {
     ;
 };
 
-pub fn main() !void {
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    defer _ = gpa.deinit();
-    const allocator = gpa.allocator();
-
-    const args = try std.process.argsAlloc(allocator);
-    defer std.process.argsFree(allocator, args);
+pub fn main(init: std.process.Init) !void {
+    const allocator = init.arena.allocator();
+    const args = try init.minimal.args.toSlice(allocator);
 
     const cli = flags.parse(allocator, args, CLI) catch |err| {
         std.debug.print("error: {s}\n", .{@errorName(err)});

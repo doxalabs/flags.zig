@@ -97,7 +97,7 @@ fn parse_struct(allocator: std.mem.Allocator, args: []const []const u8, comptime
     var slice_lists = std.mem.zeroes([named_fields.len]std.ArrayList([]const u8));
     inline for (named_fields, 0..) |field, fi| {
         if (comptime is_slice_type(field.type)) {
-            slice_lists[fi] = .{};
+            slice_lists[fi] = .empty;
         }
     }
     defer {
@@ -164,13 +164,13 @@ fn parse_struct(allocator: std.mem.Allocator, args: []const []const u8, comptime
         if (comptime subcmd_idx) |si| {
             const subcmd_field = named_fields[si];
             const SubT = unwrap_optional(subcmd_field.type);
-            seen[si] = true;
             const parsed = try parse_commands(allocator, args[i..], SubT);
             if (comptime @typeInfo(subcmd_field.type) == .optional) {
                 @field(result, subcmd_field.name) = @as(subcmd_field.type, parsed);
             } else {
                 @field(result, subcmd_field.name) = parsed;
             }
+            seen[si] = true;
             break;
         }
 
@@ -190,6 +190,12 @@ fn parse_struct(allocator: std.mem.Allocator, args: []const []const u8, comptime
     }
 
     errdefer {
+        if (comptime subcmd_idx) |si| {
+            if (seen[si]) {
+                deinit(allocator, @field(result, named_fields[si].name));
+            }
+        }
+
         inline for (named_fields, 0..) |field, fi| {
             if (comptime is_slice_type(field.type)) {
                 if (slice_assigned[fi]) {
@@ -1096,6 +1102,23 @@ test "multi-slice error path does not leak" {
     try std.testing.expectError(
         error.InvalidValue,
         parse(allocator, &.{ "prog", "--files=a.txt,b.txt", "--ports=80,bad" }, Args),
+    );
+}
+
+test "subcommand allocation error path does not leak" {
+    const allocator = std.testing.allocator;
+    const CLI = struct {
+        config: []const u8,
+        command: union(enum) {
+            serve: struct {
+                hosts: []const []const u8 = &[_][]const u8{},
+            },
+        },
+    };
+
+    try std.testing.expectError(
+        error.MissingRequiredFlag,
+        parse(allocator, &.{ "prog", "serve", "--hosts=a.com,b.com" }, CLI),
     );
 }
 
